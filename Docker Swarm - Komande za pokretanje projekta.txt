@@ -1,0 +1,24 @@
+1. .\docker-machine.exe create manager --virtualbox-no-vtx-check - Kreiranje menadzera
+2. Kreiranje worker-a i ulazak u swarm...
+3. .\docker-machine.exe ssh manager - Povezivanje na menadzera
+4. docker swarm init --advertise-addr <address>
+5. U Docker Desktop-u, u podesavanjima, u Docker Engine tab-u, postaviti <address>:5000 u okviru insecure-registries atributa.
+6. U okviru menadzera:
+	- sudo su - Prelazak u privilegovani rezim rada
+	- cd /var/lib/boot2docker - Prelazak u navedeni direktorijum
+	- vi profile - Otvaranje editora fajlova (konkretno za fajl profile)
+	- U okviru EXTRA_ARGS atributa dodati --insecure-registry <address>:5000
+	- Esc -> :x - Izlazak iz editora i cuvanje promena (potrebno je biti pozicioniran na pocetku fajla najpre)
+	- exit - Izlazak iz privilegovanog rezima rada
+	- exit - Odvezivanje sa menadzerom
+	- .\docker-machine.exe restart manager - Restartovanje menadzera
+	- .\docker-machine.exe ssh manager - Ponovno povezivanje na menadzera
+7. docker service create --name registry --replicas 1 --publish 5000:5000 registry:2 - Kreiranje zasebnog repozitorijuma za cuvanje image-a neophodnih za rad aplikacije
+Tacke 8 i 9 je neophodno uraditi iz posebne konzole (ne sa menadzera!)
+8. docker tag <image_name> <address>:5000/<image_name> - Tag-ovanje svih potrebnih image-a (Potrebno uraditi za sve image-e)
+9. docker push <image_tag> - Push-ovanje tag-ovanog image-a na kreirani repozitorijum (Potrebno uraditi za sve image-e)
+Provera da li su image-i push-ovani na repozitorijum: <address>:5000/v2/_catalog
+10. Sa menadzer konzole: docker pull <address>:5000/<image_name> - Pull-ovanje svih potrebnih image-a sa repozitorijuma (Potrebno uraditi za sve image-e)
+11. Sa menadzer konzole: docker tag <address>:5000/<image_name> <image_name> - Tag-ovanje svih skinutih image-a (zbog oslovljavanja iz .yaml fajla) (Potrebno uraditi za sve image-e)
+12. Sa menadzer konzole: cp <stack.yaml_file_path> stack.yaml - Kopiranje .yaml fajla na menadzera za pokretanje servisa
+13. docker stack deploy --compose-file stack.yaml stack - Pokretanje servisa
